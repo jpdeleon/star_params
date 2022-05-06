@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
 
+import itertools
+from os import makedirs
+from os.path import join, exists
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import lightkurve as lk
-from astropy.coordinates import SkyCoord, Distance
 from astropy import units as u
+from astropy.coordinates import SkyCoord, Distance
 from astroquery.mast import Observations, Catalogs
 from astroquery.simbad import Simbad
-
+from astroquery.vizier import Vizier
 
 DATA_PATH = '../data'
+
+def flatten_list(lol):
+    """flatten list of list (lol)"""
+    return list(itertools.chain.from_iterable(lol))
 
 def get_coord_from_epicid(epicid):
     """Scrape exofop website for relevant info"""
@@ -209,19 +216,19 @@ def get_tois_mass_RV_K(clobber=False):
         df.index.name = "TOI"
         df = df.reset_index()
 
-        df["RV_K_lo"] = get_RV_K(
-            tois["Period (days)"],
-            tois["Stellar Radius (R_Sun)"],  # should be Mstar
-            df["Planet mass (Mp_Earth) lo"],
-            with_unit=True,
-        )
+        # df["RV_K_lo"] = get_RV_K(
+        #     tois["Period (days)"],
+        #     tois["Stellar Radius (R_Sun)"],  # should be Mstar
+        #     df["Planet mass (Mp_Earth) lo"],
+        #     with_unit=True,
+        # )
 
-        df["RV_K_hi"] = get_RV_K(
-            tois["Period (days)"],
-            tois["Stellar Radius (R_Sun)"],  # should be Mstar
-            df["Planet mass (Mp_Earth) hi"],
-            with_unit=True,
-        )
+        # df["RV_K_hi"] = get_RV_K(
+        #     tois["Period (days)"],
+        #     tois["Stellar Radius (R_Sun)"],  # should be Mstar
+        #     df["Planet mass (Mp_Earth) hi"],
+        #     with_unit=True,
+        # )
 
         joint = pd.merge(tois, df, on="TOI")
         joint.to_csv(fp, index=False)
@@ -259,7 +266,7 @@ def get_tois(
     dl_link = "https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv"
     fp = join(outdir, "TOIs.csv")
     if not exists(outdir):
-        os.makedirs(outdir)
+        makedirs(outdir)
 
     if not exists(fp) or clobber:
         d = pd.read_csv(dl_link)  # , dtype={'RA': float, 'Dec': float})
@@ -390,7 +397,7 @@ def get_ctois(clobber=True, outdir=DATA_PATH, verbose=False, remove_FP=True):
     dl_link = "https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv"
     fp = join(outdir, "CTOIs.csv")
     if not exists(outdir):
-        os.makedirs(outdir)
+        makedirs(outdir)
 
     if not exists(fp) or clobber:
         d = pd.read_csv(dl_link)  # , dtype={'RA': float, 'Dec': float})
@@ -464,8 +471,8 @@ def get_specs_table_from_tfop(clobber=True, outdir=DATA_PATH, verbose=True):
     https://exofop.ipac.caltech.edu/tess/classification_plots.php
     """
     base = "https://exofop.ipac.caltech.edu/tess/"
-    fp = os.path.join(outdir, "tfop_sg2_spec_table.csv")
-    if not os.path.exists(fp) or clobber:
+    fp = join(outdir, "tfop_sg2_spec_table.csv")
+    if not exists(fp) or clobber:
         url = base + "download_spect.php?sort=id&output=csv"
         df = pd.read_csv(url)
         df.to_csv(fp, index=False)

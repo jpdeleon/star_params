@@ -22,7 +22,7 @@ from astropy.coordinates import SkyCoord, Distance
 import astropy.units as u
 from tqdm import tqdm
 
-from utils import *
+from utils import flatten_list, get_epicid_from_k2name, get_toi, get_tois, get_target_coord
 
 class Target(object):
     """
@@ -227,38 +227,6 @@ class Target(object):
                 s = tab.to_pandas().squeeze().str.decode("ascii")
                 print(f"\nSee also: {tab._meta['name']}\n{s}")
                 self.variable_star = True
-
-    def query_TGv8_catalog(self, gaiaid=None, data_path=None):
-        """
-        Stellar parameters of TESS host stars (TICv8)
-        using Gaia2+APOGEE14+GALAH+RAVE5+LAMOST+SkyMapper;
-        See Carillo2020: https://arxiv.org/abs/1911.07825
-        Parameter
-        ---------
-        gaiaid : int
-            Gaia DR2 source id (optional)
-        data_path : str
-            path to data
-
-        Returns
-        -------
-        pandas.Series
-        """
-        if gaiaid is None:
-            if self.gaiaid is None:
-                errmsg = "Provide gaiaid or try `self.query_gaia_dr2_catalog"
-                errmsg += "(return_nearest_xmatch=True)`"
-                raise ValueError(errmsg)
-            else:
-                gaiaid = self.gaiaid
-
-        df = get_TGv8_catalog(data_path=data_path)
-        d = df.query("Gaia_source_id==@gaiaid")
-        if len(d) > 0:
-            # return series
-            return d.squeeze()
-        else:
-            print(f"Gaia DR2 {gaiaid} not found in TGv8 catalog.")
 
     def query_gaia_dr2_catalog(
         self, radius=None, return_nearest_xmatch=False, verbose=None
@@ -698,33 +666,6 @@ class Target(object):
         """
         """
         return get_k2_data_from_exofop(self.epicid, table=table)
-
-    def query_specs_from_tfop(self, clobber=None, mission=None):
-        """
-        """
-        mission = self.mission if mission is None else mission.lower()
-        base = f"https://exofop.ipac.caltech.edu/{mission}"
-        if mission == "tess":
-            clobber = clobber if clobber is not None else self.clobber
-            specs_table = get_specs_table_from_tfop(
-                clobber=clobber, verbose=self.verbose
-            )
-            if self.ticid is None:
-                print(
-                    f"TIC ID of {self.target_name} will be inferred by cross-matching coordinates in TIC catalog."
-                )
-                ticid = self.query_tic_catalog(return_nearest_xmatch=True)
-            else:
-                ticid = self.ticid
-
-            idx = specs_table["TIC ID"].isin([ticid])
-            if self.verbose:
-                url = base + f"/target.php?id={ticid}"
-                print(f"There are {idx.sum()} spectra in {url}\n")
-            return specs_table[idx]
-        else:
-            url = base + f"/edit_target.php?id={self.epicid}"
-            print(f"Scraping not yet implemented.\nSee {url}")
 
     @property
     def toi_Tmag(self):
