@@ -41,6 +41,29 @@ def get_coord_from_epicid(epicid):
     coord = SkyCoord(ra=ra, dec=dec, unit=("hourangle", "deg"))
     return coord
 
+def get_k2_data_from_exofop(epic, table="star"):
+    """
+    get data from exofop table
+    """
+    keys = {
+        "phot": 1,
+        "mag": 1,
+        "star": 2,
+        "planet": 3,
+        "spec": 4,
+        "imaging": 5,
+        "file": 8,
+    }
+    errmsg = f"table={table} not in\n{list(keys.keys())}"
+    assert table in list(keys.keys()), errmsg
+    key = keys[table]
+    url = f"https://exofop.ipac.caltech.edu/k2/edit_target.php?id={epic}"
+    data = pd.read_html(url, attrs={"id": f"myTable{key}"})[0]
+    # remove multi-index column
+    data = data.T.reset_index(level=0, drop=True).T
+    data["epic"] = epic
+    return data
+    
 def get_epicid_from_k2name(k2name):
     res = lk.search_targetpixelfile(k2name, mission="K2")
     target_name = res.table.to_pandas().target_name[0]

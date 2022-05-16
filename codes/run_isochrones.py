@@ -13,7 +13,7 @@ from isochrones.priors import DistancePrior, GaussianPrior, FlatPrior
 from star import Star
 
 use_priors = True
-refit = True
+refit = False
 verbose = True
 redownload = False
 fp_data = '../data/nexsci_data.csv'

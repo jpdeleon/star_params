@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 import pandas as pd
 
-from utils import get_mag_err_from_flux
+from utils import get_mag_err_from_flux, get_mist_eep_table, map_float
 from target import Target
 
 class Star(Target):

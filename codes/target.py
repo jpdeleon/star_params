@@ -22,7 +22,7 @@ from astropy.coordinates import SkyCoord, Distance
 import astropy.units as u
 from tqdm import tqdm
 
-from utils import flatten_list, get_epicid_from_k2name, get_toi, get_tois, get_target_coord
+from utils import flatten_list, get_epicid_from_k2name, get_toi, get_tois, get_target_coord, get_k2_data_from_exofop
 
 class Target(object):
     """
@@ -490,6 +490,8 @@ class Target(object):
             raise ValueError(msg)
         t = self.tic_params
 
+        assert t.gaiaqflag==1, "TIC qflag!=1"
+
         # check magnitude
         if np.any(np.isnan([g.phot_g_mean_mag, t.Tmag])):
             msg = f"Gmag={g.phot_g_mean_mag}; Tmag={t.Tmag}"
@@ -513,10 +515,9 @@ class Target(object):
             warnings.warn(msg)
             print(msg)
         else:
-            # dradius = g.radius_val - t.rad
-            # msg = f"Rgaia-Rtic={g.radius_val:.2f}-{t.rad:.2f}={dradius:.2f}"
-            # assert dradius <= Rtol, msg
-            assert np.allclose(g.radius_val, t.rad, rtol=Rtol)
+            dradius = g.radius_val - t.rad
+            msg = f"Rgaia-Rtic={g.radius_val:.2f}-{t.rad:.2f}={dradius:.2f}"
+            assert np.allclose(g.radius_val, t.rad, rtol=Rtol), msg
 
         # check gaia ID
         if (self.gaiaid is not None) and (t["GAIA"] is not np.nan):
